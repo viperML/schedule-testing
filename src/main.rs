@@ -1,43 +1,33 @@
-use dagga::Node;
-
 use color_eyre::Result;
+use daggy::{Dag, Walker};
+use daggy::petgraph::dot::{Dot, Config};
+
+#[derive(Copy, Clone, Debug)]
+struct Buildable<'a>(&'a str);
 
 fn main() -> Result<()> {
-    let dag = dagga::Dag::<(), &str>::default()
-        .with_node(
-            Node::new(())
-                .with_name("/miq/store/AAAB")
-                .with_result("/miq/store/AAAB")
-                .with_read("/miq/store/AAAA"),
-        )
-        .with_node(
-            Node::new(())
-                .with_name("/miq/store/AAAA")
-                .with_result("/miq/store/AAAA"), // .with_read("/miq/store/AAAB")
-        )
-        .with_node(
-            Node::new(())
-                .with_name("/miq/store/AAAD")
-                .with_result("/miq/store/AAAD")
-                .with_read("/miq/store/AAAA"),
-        )
-        .with_node(
-            Node::new(())
-                .with_name("/miq/store/AAAE")
-                .with_result("/miq/store/AAAE")
-                .with_read("/miq/store/AAAD")
-                .with_read("/miq/store/AAAB"),
-        );
+    let dag = &mut Dag::<Buildable, ()>::new();
 
-    // let result = dag.build_schedule()?;
-    let sched = dag.build_schedule()?;
-    let result = sched.batched_names();
+    let parent = dag.add_node(Buildable("/miq/bootstrap"));
 
-    eprintln!("{:?}", result);
+    let (a1, b1) = dag.add_child(parent, (), Buildable("/miq/gcc"));
+    let (a2, b2) = dag.add_child(parent, (), Buildable("/miq/coreutils"));
 
-    let result2: Vec<&str> = result.into_iter().flat_map(|x| x).collect();
+    let b3 = dag.add_node(Buildable("/miq/glibc"));
+    dag.add_edge(b1, b3, ())?;
+    dag.add_edge(b2, b3, ())?;
 
-    eprintln!("{:?}", result2);
+    let dag = &*dag;
+    eprintln!("{:?}", dag);
+
+    let dot = Dot::with_config(dag, &[Config::EdgeNoLabel]);
+    println!("{:?}", dot);
+
+
+    for elem in dag.children(parent).iter(&dag) {
+        eprintln!("{:?}", elem);
+    }
+
 
     Ok(())
 }

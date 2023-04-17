@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 color-eyre = "0.6.2"
-dagga = "0.2.0"
+daggy = "0.8.0"
