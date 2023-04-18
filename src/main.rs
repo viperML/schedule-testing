@@ -31,13 +31,11 @@ fn main() -> Result<()> {
 
     // let result = dag.build_schedule()?;
     let sched = dag.build_schedule()?;
-    let result = sched.batched_names();
+    let batches: Vec<Node<_, _>> = sched.batches.into_iter().flat_map(|x| x).collect();
+    eprintln!("{:?}", batches);
 
-    eprintln!("{:?}", result);
-
-    let result2: Vec<&str> = result.into_iter().flat_map(|x| x).collect();
-
-    eprintln!("{:?}", result2);
+    let result = dagga::dot::DagLegend::new(batches.iter());
+    dagga::dot::save_as_dot(&result, "./main")?;
 
     Ok(())
 }
