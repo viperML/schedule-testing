@@ -1,2 +1,5 @@
 name = "bootstrap"
-deps = []
+deps = [
+    "bootstrap-busybox",
+    "bootstrap-tools"
+]

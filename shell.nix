@@ -8,4 +8,5 @@ with import <nixpkgs> {};
       clippy
     ];
     RUST_SRC_PATH = "${rustPlatform.rustLibSrc}";
+    RUST_BACKTRACE="full";
   }

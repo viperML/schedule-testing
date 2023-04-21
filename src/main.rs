@@ -86,6 +86,7 @@ fn main() -> Result<()> {
         size = search
             .iter(&old_dag)
             .fold(0, |acc, n| if !old_dag[n].visited { acc + 1 } else { acc });
+
         info!(?size);
 
         cycle = cycle + 1;
@@ -97,8 +98,8 @@ fn main() -> Result<()> {
     let sort = toposort
         .iter()
         .map(|&n| dag.node_weight(n).unwrap())
-        .rev()
         .collect::<Vec<_>>();
+
     info!(?sort);
 
     Ok(())
@@ -108,50 +109,38 @@ fn cycle_dag(dag: &mut PkgDag, node: NodeIndex) -> Result<()> {
     let old_dag = dag.clone();
     info!("Cycling at node {:?}", old_dag[node]);
 
-    create_childen(dag, node)?;
+    if !dag[node].visited {
+        dag[node].visit();
 
-    for (_, child) in old_dag.children(node).iter(&old_dag) {
-        cycle_dag(dag, child)?;
-    }
+        for elem in &old_dag.node_weight(node).unwrap().inner.deps {
+            info!("I want to create {:?}", elem);
 
-    Ok(())
-}
+            let target = Pkg::new(elem)?;
 
-fn create_childen(dag: &mut PkgDag, node: NodeIndex) -> Result<()> {
-    let old_dag = dag.clone();
+            for parent in Topo::new(&old_dag).iter(&old_dag) {
+                let p = &old_dag[parent].inner;
+                warn!("Examining G component {:?}", p);
 
-    if dag[node].visited {
-        return Ok(());
-    }
+                if p == &target.clone() {
+                    dag.add_edge(parent, node, ())?;
 
-    info!("Creating children at: {:?}", old_dag[node]);
-
-    dag[node].visit();
-
-    for elem in &old_dag.node_weight(node).unwrap().inner.deps {
-        info!("I want to create {:?}", elem);
-
-        let target_child = Pkg::new(elem)?;
-
-        for child in Topo::new(&old_dag).iter(&old_dag) {
-            let p = &old_dag[child].inner;
-            warn!("Examining G component {:?}", p);
-
-            if p == &target_child.clone() {
-                dag.add_edge(node, child, ())?;
-
-                return Ok(());
+                    return Ok(());
+                }
             }
-        }
 
-        dag.add_child(
-            node,
-            (),
-            PkgNode {
-                inner: target_child,
-                visited: false,
-            },
-        );
+            dag.add_parent(
+                node,
+                (),
+                PkgNode {
+                    inner: target,
+                    visited: false,
+                },
+            );
+        }
+    }
+
+    for (_, n) in old_dag.parents(node).iter(&old_dag) {
+        cycle_dag(dag, n)?;
     }
 
     Ok(())
