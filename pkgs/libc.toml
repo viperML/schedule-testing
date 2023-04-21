@@ -1,0 +1,6 @@
+name = "libc"
+deps = [
+    "gcc",
+    "coreutils",
+    "bootstrap"
+]

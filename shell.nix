@@ -5,6 +5,7 @@ with import <nixpkgs> {};
       rust-analyzer-unwrapped
       rustfmt
       graphviz
+      clippy
     ];
     RUST_SRC_PATH = "${rustPlatform.rustLibSrc}";
   }
