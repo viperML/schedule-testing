@@ -34,11 +34,16 @@ impl Pkg {
     }
 }
 
-#[derive(Debug, Clone, Display)]
-#[display(fmt = "{}", inner)]
+#[derive(Clone)]
 struct PkgNode {
     inner: Pkg,
     visited: bool,
+}
+
+impl std::fmt::Debug for PkgNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "<{}>", self.inner.name)
+    }
 }
 
 impl PkgNode {
